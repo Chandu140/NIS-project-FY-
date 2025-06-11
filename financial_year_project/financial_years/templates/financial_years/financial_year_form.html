@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f2f5;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        form p {
+            margin-bottom: 15px;
+        }
+        form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        form input[type="text"],
+        form input[type="date"],
+        form select { /* Added form select */
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        form input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .form-actions {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .errorlist {
+            color: #dc3545; /* Red */
+            list-style: none;
+            padding: 0;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        .helptext {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-top: 5px;
+             text-decoration: none;
+        }
+        .save-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .save-button:hover {
+            background-color: #0056b3;
+        }
+        .cancel-button {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .cancel-button:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{% if form.instance.pk %}Edit Financial Year{% else %}Add New Financial Year{% endif %}</h1>
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <ul class="errorlist">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% for field in form %}
+                <p>
+                    {% if field.field.widget.input_type == 'checkbox' %}
+                        {{ field.label_tag }} {{ field }}
+                    {% else %}
+                        {{ field.label_tag }}<br>
+                        {{ field }}
+                    {% endif %}
+                    {% if field.help_text %}
+                        <span class="helptext">{{ field.help_text }}</span>
+                    {% endif %}
+                    {% if field.errors %}
+                        <ul class="errorlist">
+                            {% for error in field.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </p>
+            {% endfor %}
+
+            <div class="form-actions">
+                <a href="{% url 'financial_year_list' %}" class="cancel-button">Cancel</a>
+                <button type="submit" class="save-button">Save Financial Year</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 'nameInput' is now a select element, but still has id_name
+            const nameSelect = document.getElementById('id_name');
+            const startDateInput = document.getElementById('id_start_date');
+            const endDateInput = document.getElementById('id_end_date');
+            const budgetSourceSelect = document.getElementById('id_budget_source');
+
+            // Store original options for budget_source
+            const originalBudgetSourceOptions = Array.from(budgetSourceSelect.options).map(option => ({
+                value: option.value,
+                text: option.text
+            }));
+
+            function updateDatesAndBudgetSourceOptions() {
+                const name = nameSelect.value; // Get value from select element
+                const match = name.match(/(\d{4})-(\d{4})$/); // Simplified regex for fixed format
+
+                if (match) {
+                    try {
+                        const startYear = parseInt(match[1]);
+                        const endYear = parseInt(match[2]);
+
+                        // This specific check should ideally not be needed if choices are already YYYY-YYYY
+                        // but keeping for robustness if input values are unexpected.
+                        if (endYear !== startYear + 1) {
+                            startDateInput.value = '';
+                            endDateInput.value = '';
+                            startDateInput.min = '';
+                            startDateInput.max = '';
+                            endDateInput.min = '';
+                            endDateInput.max = '';
+                            populateBudgetSourceOptions(originalBudgetSourceOptions); // Reset options
+                            return;
+                        }
+
+                        const financialYearStartDate = new Date(startYear, 3, 1); // Month is 0-indexed (April is 3)
+                        const financialYearEndDate = new Date(endYear, 2, 31);    // Month is 0-indexed (March is 2)
+
+                        const format_date = (date_obj) => {
+                            const year = date_obj.getFullYear();
+                            const month = (date_obj.getMonth() + 1).toString().padStart(2, '0');
+                            const day = date_obj.getDate().toString().padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                        };
+
+                        const formattedFinancialYearStartDate = format_date(financialYearStartDate);
+                        const formattedFinancialYearEndDate = format_date(financialYearEndDate);
+
+                        // Only set values if they are empty, or if they are incorrect based on the selected year
+                        if (startDateInput.value !== formattedFinancialYearStartDate) {
+                            startDateInput.value = formattedFinancialYearStartDate;
+                        }
+                        if (endDateInput.value !== formattedFinancialYearEndDate) {
+                            endDateInput.value = formattedFinancialYearEndDate;
+                        }
+                        
+
+                        startDateInput.min = formattedFinancialYearStartDate;
+                        startDateInput.max = formattedFinancialYearEndDate;
+                        endDateInput.min = formattedFinancialYearStartDate;
+                        endDateInput.max = formattedFinancialYearEndDate;
+
+                        // Conditional Budget Source options based on Financial Year
+                        if (name === '2024-2025') {
+                            // Show only 'Dpip'
+                            populateBudgetSourceOptions(originalBudgetSourceOptions.filter(opt => opt.value === 'DPIP'));
+                        } else if (name === '2025-2026') {
+                            // Show both 'Committed' and 'Dpip'
+                            populateBudgetSourceOptions(originalBudgetSourceOptions);
+                        } else {
+                            // For other years (though not expected with ChoiceField), show all options
+                            populateBudgetSourceOptions(originalBudgetSourceOptions);
+                        }
+
+                    } catch (e) {
+                        console.error("Error parsing years or setting dates:", e);
+                        // Clear dates and reset budget source options on JS error
+                        startDateInput.value = '';
+                        endDateInput.value = '';
+                        startDateInput.min = '';
+                        startDateInput.max = '';
+                        endDateInput.min = '';
+                        endDateInput.max = '';
+                        populateBudgetSourceOptions(originalBudgetSourceOptions);
+                    }
+                } else {
+                    // If name is invalid (e.g., not matching YYYY-YYYY, which shouldn't happen with select)
+                    startDateInput.value = '';
+                    endDateInput.value = '';
+                    startDateInput.min = '';
+                    startDateInput.max = '';
+                    endDateInput.min = '';
+                    endDateInput.max = '';
+                    populateBudgetSourceOptions(originalBudgetSourceOptions); // Reset options
+                }
+            }
+
+            function populateBudgetSourceOptions(options) {
+                const currentBudgetSourceValue = budgetSourceSelect.value; // Store current selection
+                budgetSourceSelect.innerHTML = ''; // Clear existing options
+
+                options.forEach(optionData => {
+                    const option = document.createElement('option');
+                    option.value = optionData.value;
+                    option.textContent = optionData.text;
+                    budgetSourceSelect.appendChild(option);
+                });
+
+                // Try to restore the original selection if it's still available
+                if (options.some(opt => opt.value === currentBudgetSourceValue)) {
+                    budgetSourceSelect.value = currentBudgetSourceValue;
+                } else {
+                    // If the previously selected option is no longer available, default to the first available option
+                    if (options.length > 0) {
+                        budgetSourceSelect.value = options[0].value;
+                    } else {
+                        // If no options are available (e.g., filtered to empty), ensure no selection
+                        budgetSourceSelect.value = '';
+                    }
+                }
+            }
+
+            // Listen for 'change' event on the select element
+            nameSelect.addEventListener('change', updateDatesAndBudgetSourceOptions);
+
+            // Run on page load for initial state (especially for edit forms)
+            updateDatesAndBudgetSourceOptions();
+        });
+    </script>
+</body>
+</html>

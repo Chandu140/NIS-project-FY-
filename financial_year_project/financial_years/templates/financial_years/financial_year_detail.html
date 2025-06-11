@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Year Details - {{ year.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f2f5;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        p {
+            margin-bottom: 10px;
+        }
+        strong {
+            color: #555;
+        }
+        .status-active {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-inactive {
+            color: #6c757d;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Details for Financial Year: {{ year.name }}</h1>
+        <p><strong>Name:</strong> {{ year.name }}</p>
+        <p><strong>Start Date:</strong> {{ year.start_date|date:"d-m-Y" }}</p>
+        <p><strong>End Date:</strong> {{ year.end_date|date:"d-m-Y" }}</p>
+        <p>
+            <strong>Status:</strong>
+            {% if year.is_active %}
+                <span class="status-active">Active</span>
+            {% else %}
+                <span class="status-inactive">Inactive</span>
+            {% endif %}
+        </p>
+        {# New field for Budget Source #}
+        <p><strong>Budget Source:</strong> {{ year.get_budget_source_display }}</p>
+        
+        <a href="{% url 'financial_year_list' %}" class="back-button">Back to List</a>
+    </div>
+</body>
+</html>
