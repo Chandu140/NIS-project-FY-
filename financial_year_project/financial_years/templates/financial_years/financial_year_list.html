@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f2f5;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .action-buttons a {
+            display: inline-block;
+            padding: 8px 12px;
+            margin-right: 5px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: white;
+            font-size: 0.9em;
+        }
+        .view-button {
+            background-color: #17a2b8;
+        }
+        .edit-button {
+            background-color: #ffc107;
+            color: #333; /* Darker text for yellow background */
+        }
+        .delete-button {
+            background-color: #dc3545;
+        }
+        .add-button {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            float: right;
+        }
+        .add-button:hover, .action-buttons a:hover {
+            opacity: 0.9;
+        }
+        .status-active {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-inactive {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>
+            {{ page_title }}
+            <a href="{% url 'financial_year_add' %}" class="add-button">
+                + Add Financial Year
+            </a>
+        </h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>S.no</th>
+                    <th>Financial Year</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Status</th>
+                    <th>Budget Source</th> {# New column header #}
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for year in financial_years %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ year.name }}</td>
+                    <td>{{ year.start_date|date:"d-m-Y" }}</td> 
+                    <td>{{ year.end_date|date:"d-m-Y" }}</td> 
+                    <td>
+                        {% if year.is_active %}
+                            <span class="status-active">Active</span>
+                        {% else %}
+                            <span class="status-inactive">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ year.get_budget_source_display }}</td> {# Display budget source #}
+                    <td class="action-buttons">
+                        <a href="{% url 'financial_year_detail' year.pk %}" class="view-button">View</a>
+                        <a href="{% url 'financial_year_edit' year.pk %}" class="edit-button">Edit</a>
+                        <a href="{% url 'financial_year_delete' year.pk %}" class="delete-button">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">No financial years found.</td> {# Update colspan #}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
